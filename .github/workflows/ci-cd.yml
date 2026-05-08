@@ -3,7 +3,7 @@ name: CI/CD Base de Datos MySQL
 on:
   push:
     branches:
-      - main
+      - deploy
   workflow_dispatch:
 
 jobs:
