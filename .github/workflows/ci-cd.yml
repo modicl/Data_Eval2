@@ -1,0 +1,63 @@
+name: CI/CD Base de Datos MySQL
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Copiar scripts SQL al EC2 BD vía Bastion Host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          # Bastion Host: EC2 pública del Frontend (único acceso a la red privada)
+          proxy_host: ${{ secrets.BASTION_HOST }}
+          proxy_username: ${{ secrets.BASTION_USER }}
+          proxy_key: ${{ secrets.BASTION_SSH_KEY }}
+
+          # EC2 privada de la Base de Datos
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "01_creacion_base_datos.sql,02_backup_y_mantenimiento.sql"
+          target: "~/mysql-init/"
+
+      - name: Desplegar contenedor MySQL en EC2 BD vía Bastion Host
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          # Bastion Host: EC2 pública del Frontend (único acceso a la red privada)
+          proxy_host: ${{ secrets.BASTION_HOST }}
+          proxy_username: ${{ secrets.BASTION_USER }}
+          proxy_key: ${{ secrets.BASTION_SSH_KEY }}
+
+          # EC2 privada de la Base de Datos
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # 1. Descargar imagen oficial de MySQL desde Docker Hub
+            docker pull mysql:8.0
+
+            # 2. Detener y eliminar el contenedor anterior si existe
+            docker stop mysql_bd_eval2 || true
+            docker rm   mysql_bd_eval2 || true
+
+            # 3. Levantar el nuevo contenedor
+            #    - Los scripts SQL en ~/mysql-init/ se ejecutan automáticamente
+            #      solo la primera vez que el volumen mysql_bd_data está vacío
+            #    - El archivo .env debe existir en la EC2 con:
+            #        MYSQL_ROOT_PASSWORD=<contraseña>
+            #        MYSQL_DATABASE=proyecto_db
+            docker run -d --name mysql_bd_eval2 -p 3306:3306 \
+              --restart unless-stopped \
+              --env-file .env \
+              -v mysql_bd_data:/var/lib/mysql \
+              -v ~/mysql-init:/docker-entrypoint-initdb.d:ro \
+              mysql:8.0
