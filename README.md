@@ -8,7 +8,7 @@ Base de datos MySQL para el sistema de gestión de usuarios. Incluye scripts SQL
 
 ### Motor de Base de Datos
 
-- **MySQL**: Versión 8.0 o superior
+- **MySQL**: Versión 8.0 o superior!
 - **MariaDB**: Versión 10.4 o superior (compatible)
 
 ### Herramientas de Administración
