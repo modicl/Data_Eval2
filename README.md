@@ -333,3 +333,59 @@ SHOW VARIABLES LIKE 'collation%';
 - Los scripts incluyen datos de ejemplo para facilitar las pruebas iniciales
 - Se recomienda ejecutar los scripts en orden: primero `01_creacion_base_datos.sql`
 - El script `02_backup_y_mantenimiento.sql` es opcional pero recomendado para producción
+
+---
+
+## CI/CD con GitHub Actions
+
+El pipeline se define en `.github/workflows/ci-cd.yml` y se ejecuta automáticamente al hacer push a las ramas `main` o `develop`.
+
+> La base de datos usa la imagen oficial `mysql:latest`, por lo que **no se construye ni publica una imagen personalizada**. El pipeline únicamente se encarga de (re)desplegar el contenedor en la EC2 con el script de inicialización.
+
+### Flujo del pipeline
+
+```
+push a main / develop
+        │
+        ▼
+┌───────────────────────────────────────┐
+│  deploy                               │
+│  SSH a EC2 → pull mysql:latest        │
+│  → reemplaza contenedor               │
+│  → monta 01_creacion_base_datos.sql   │
+│    como script de inicialización      │
+└───────────────────────────────────────┘
+```
+
+### Secrets requeridos en GitHub
+
+Configura los siguientes secrets en **Settings → Secrets and variables → Actions** del repositorio:
+
+| Secret        | Descripción                                               |
+|---------------|-----------------------------------------------------------|
+| `EC2_HOST`    | IP pública o DNS de la instancia EC2 de la base de datos  |
+| `EC2_USER`    | Usuario SSH de la EC2 (ej. `ubuntu`)                      |
+| `EC2_SSH_KEY` | Clave privada SSH (contenido completo del archivo `.pem`) |
+| `DB_PASSWORD` | Contraseña root de MySQL                                  |
+| `DB_NAME`     | Nombre de la base de datos (ej. `proyecto_db`)            |
+
+### Archivo de entorno en la EC2
+
+El contenedor lee sus variables desde `/home/<EC2_USER>/.env.db`.  
+Crea ese archivo en la instancia antes del primer despliegue:
+
+```bash
+# En la EC2 de la base de datos
+cat > ~/.env.db <<EOF
+MYSQL_ROOT_PASSWORD=<contraseña-segura>
+MYSQL_DATABASE=proyecto_db
+EOF
+```
+
+### Script de inicialización
+
+El archivo `01_creacion_base_datos.sql` se monta como volumen en el directorio `/docker-entrypoint-initdb.d/` del contenedor. MySQL lo ejecuta automáticamente la primera vez que el contenedor arranca con un volumen vacío.
+
+### Ejecución manual
+
+El workflow puede dispararse manualmente desde **Actions → CI/CD Base de Datos MySQL → Run workflow**.
