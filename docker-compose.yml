@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: mysql:latest
+    container_name: mysql_eval2
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-proyecto_db}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./01_creacion_base_datos.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
