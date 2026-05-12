@@ -8,7 +8,7 @@ Base de datos MySQL para el sistema de gestión de usuarios. Incluye scripts SQL
 
 ### Motor de Base de Datos
 
-- **MySQL**: Versión 8.0 o superior!
+- **MySQL**: Versión 8.0 o superior
 - **MariaDB**: Versión 10.4 o superior (compatible)
 
 ### Herramientas de Administración
@@ -362,7 +362,7 @@ push a main / develop
 Configura los siguientes secrets en **Settings → Secrets and variables → Actions** del repositorio:
 
 | Secret        | Descripción                                               |
-|---------------|-----------------------------------------------------------|
+| ------------- | --------------------------------------------------------- |
 | `EC2_HOST`    | IP pública o DNS de la instancia EC2 de la base de datos  |
 | `EC2_USER`    | Usuario SSH de la EC2 (ej. `ubuntu`)                      |
 | `EC2_SSH_KEY` | Clave privada SSH (contenido completo del archivo `.pem`) |
