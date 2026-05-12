@@ -54,17 +54,13 @@ jobs:
             docker pull mysql:8.0
 
             # 3. Detener y eliminar el contenedor anterior si existe
+            #    El volumen mysql_bd_data NO se elimina para preservar los datos
             docker stop mysql_bd_eval2 || true
             docker rm   mysql_bd_eval2 || true
 
-            # 4. Eliminar el volumen anterior para que MySQL reinicialice
-            #    con el nuevo MYSQL_USER (solo necesario en el primer redeploy)
-            docker volume rm mysql_bd_data || true
-
-            # 5. Levantar el contenedor — MySQL creará automáticamente:
-            #    - La base de datos (MYSQL_DATABASE)
-            #    - El usuario remoto (MYSQL_USER@%) con su password
-            #    - Ejecutará los scripts SQL de ~/mysql-init/
+            # 4. Levantar el contenedor
+            #    - Si el volumen ya tiene datos, MySQL NO re-ejecuta los scripts de init
+            #    - Si es la primera vez (volumen vacío), MySQL inicializa la BD automáticamente
             docker run -d --name mysql_bd_eval2 -p 3306:3306 \
               --restart unless-stopped \
               --env-file ~/.env \
