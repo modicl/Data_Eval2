@@ -3,7 +3,7 @@
 ## Descripción
 Base de datos MySQL para el sistema de gestión de usuarios. Incluye scripts SQL completos para la creación, mantenimiento y backup de la base de datos.
 
-## Versiones y Herramientas Requeridas
+## Versiones y Herramientas Requeridas!
 
 ### Motor de Base de Datos
 - **MySQL**: Versión 8.0 o superior
